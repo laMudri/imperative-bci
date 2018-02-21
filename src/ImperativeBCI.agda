@@ -132,7 +132,7 @@ module ImperativeBCI where
            →
            h , η , let-rd x ,, e ⇓ h′ , v
     e-wr : ∀ {x y e h′ v i n} →
-           η x ≡ nat i → η y ≡ nat n → n ∈dom′ h → write i n h , η , e ⇓ h′ , v
+           η x ≡ nat i → η y ≡ nat n → i ∈dom′ h → write i n h , η , e ⇓ h′ , v
            →
            h , η , wr[ x , y ],, e ⇓ h′ , v
     e-op : ∀ {f x y e h′ v m n} →
@@ -162,9 +162,9 @@ module ImperativeBCI where
   deterministic (e-if0-t q0 r0) (e-if0-f nq1 r1) = ⊥-elim (nq1 q0)
   deterministic (e-if0-f nq0 r0) (e-if0-t q1 r1) = ⊥-elim (nq0 q1)
   deterministic (e-if0-f nq0 r0) (e-if0-f nq1 r1) = deterministic r0 r1
-  deterministic (e-rd q0 (n0 , nq0) r0) (e-rd q1 (n1 , nq1) r1) rewrite q0 with tt
-  deterministic (e-rd q0 (n0 , nq0) r0) (e-rd refl (n1 , nq1) r1) | tt rewrite nq0 with tt
-  deterministic (e-rd q0 (n0 , nq0) r0) (e-rd refl (.n0 , refl) r1) | tt | tt = deterministic r0 r1
+  deterministic (e-rd iq0 (n0 , nq0) r0) (e-rd iq1 (n1 , nq1) r1) rewrite iq0 with tt
+  deterministic (e-rd iq0 (n0 , nq0) r0) (e-rd refl (n1 , nq1) r1) | tt rewrite nq0 with tt
+  deterministic (e-rd iq0 (n0 , nq0) r0) (e-rd refl (.n0 , refl) r1) | tt | tt = deterministic r0 r1
   -- FIXME: more/less readable style?
   --deterministic {l} {h} {η} (e-wr {x} {y} xq0 yq0 (n0 , nq0) r0)
   --                          (e-wr xq1 yq1 (n1 , nq1) r1)
@@ -186,3 +186,51 @@ module ImperativeBCI where
   deterministic (e-lam r0) (e-lam r1) = deterministic r0 r1
   deterministic (e-val r0) (e-val r1) = deterministic r0 r1
   deterministic e-var e-var = refl , refl
+
+  infix 4 _⊆_
+
+  _⊆_ : (h h′ : Heap) → Set
+  h ⊆ h′ = ∀ {i} → i ∈dom′ h → i ∈dom′ h′
+
+  write-here : ∀ i n h → write i n h i ≡ just n
+  write-here i n h with i ≟ i
+  write-here i n h | yes _ = refl
+  write-here i n h | no ¬q = ⊥-elim (¬q refl)
+
+  write-there : ∀ i n h j → i ≢ j → write i n h j ≡ h j
+  write-there i n h j ¬q with i ≟ j
+  write-there i n h j ¬q | yes q = ⊥-elim (¬q q)
+  write-there i n h j ¬q | no _ = refl
+
+  ⊆-write : ∀ i n h → h ⊆ write i n h
+  ⊆-write i n h {j} j∈ with i ≟ j
+  ... | yes refl = n , refl
+  ... | no ¬q = j∈
+
+  ⊇-write : ∀ i n h → i ∈dom′ h → write i n h ⊆ h
+  ⊇-write i n h d {j} j∈ with i ≟ j
+  ... | yes refl = d
+  ... | no ¬q = j∈
+
+  dom-⊆ : ∀ {l h η} {e : Exp l} {h′ v} → h , η , e ⇓ h′ , v → h ⊆ h′
+  dom-⊆ (e-if0-t q r) j∈ = dom-⊆ r j∈
+  dom-⊆ (e-if0-f ¬q r) j∈ = dom-⊆ r j∈
+  dom-⊆ (e-rd iq d r) j∈ = dom-⊆ r j∈
+  dom-⊆ {h = h} (e-wr {i = i} {n} xq yq _ r) j∈ = dom-⊆ r (⊆-write i n h j∈)
+  dom-⊆ (e-op xq yq r) j∈ = dom-⊆ r j∈
+  dom-⊆ (e-app q r′ r) j∈ = dom-⊆ r (dom-⊆ r′ j∈)
+  dom-⊆ (e-lam r) j∈ = dom-⊆ r j∈
+  dom-⊆ (e-val r) j∈ = dom-⊆ r j∈
+  dom-⊆ e-var j∈ = j∈
+
+  dom-⊇ : ∀ {l h η} {e : Exp l} {h′ v} → h , η , e ⇓ h′ , v → h′ ⊆ h
+  dom-⊇ (e-if0-t q r) j∈ = dom-⊇ r j∈
+  dom-⊇ (e-if0-f ¬q r) j∈ = dom-⊇ r j∈
+  dom-⊇ (e-rd iq d r) j∈ = dom-⊇ r j∈
+  dom-⊇ {h = h} (e-wr {i = i} {n} xq yq i∈ r) {j} j∈ =
+    ⊇-write i n h i∈ (dom-⊇ r j∈)
+  dom-⊇ (e-op xq yq r) j∈ = dom-⊇ r j∈
+  dom-⊇ (e-app q r′ r) j∈ = dom-⊇ r′ (dom-⊇ r j∈)
+  dom-⊇ (e-lam r) j∈ = dom-⊇ r j∈
+  dom-⊇ (e-val r) j∈ = dom-⊇ r j∈
+  dom-⊇ e-var j∈ = j∈
