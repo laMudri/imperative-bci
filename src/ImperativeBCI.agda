@@ -20,51 +20,6 @@ module ImperativeBCI where
   open import Relation.Binary.PropositionalEquality
   open import Relation.Nullary
 
-  --Cotransitive : ∀ {a ℓ A} → Rel {a} A ℓ → Set _
-  --Cotransitive _#_ = ∀ {x y z} → x # y → (x # z) ⊎ (y # z)
-
-  --record IsApartness {a ℓ ℓ′} {A : Set a} (≈ : Rel A ℓ) (# : Rel A ℓ′)
-  --                   : Set (a l⊔ ℓ l⊔ ℓ′) where
-  --  field
-  --    isEquivalence : IsEquivalence ≈
-  --    irreflexive : Irreflexive ≈ #
-  --    sym : Symmetric #
-  --    cotrans : Cotransitive #
-
-  record IsPartialMonoid {a ℓ r A} (_≈_ : Rel {a} A ℓ) (_R_ : Rel A r)
-                         (_•_⟨_⟩ : ∀ x y → x R y → A) (ε : A)
-                         : Set (a l⊔ ℓ l⊔ r) where
-    field
-      identityTotal : (∀ y → ε R y) × (∀ x → x R ε)
-      identity : (∀ y → (ε • y ⟨ proj₁ identityTotal y ⟩) ≈ y)
-               × (∀ x → (x • ε ⟨ proj₂ identityTotal x ⟩) ≈ x)
-      distrib : (∀ {x y z} → x R z → y R z → (xy : x R y) → (x • y ⟨ xy ⟩) R z)
-              × (∀ {x y z} → x R y → x R z → (yz : y R z) → x R (y • z ⟨ yz ⟩))
-
-  record PartialMonoid c ℓ r : Set (lsuc (c l⊔ ℓ l⊔ r)) where
-    field
-      Carrier : Set c
-      _≈_ : Rel Carrier ℓ
-      _R_ : Rel Carrier r
-      _•_⟨_⟩ : ∀ x y → x R y → Carrier
-      ε : Carrier
-      isPartialMonoid : IsPartialMonoid _≈_ _R_ _•_⟨_⟩ ε
-
-  --record IsHeap {a ℓ ℓ′} {A : Set a}
-  --              (≈ : Rel A ℓ) (# : Rel A ℓ′) (• : Op₂ A) (ε : A)
-  --              : Set (a l⊔ ℓ l⊔ ℓ′) where
-  --  field
-  --    isMonoid : IsMonoid ≈ • ε
-  --    isApartness : IsApartness ≈ #
-
-  --record Heap c ℓ ℓ′ : Set (lsuc (c l⊔ ℓ l⊔ ℓ′)) where
-  --  field
-  --    Carrier : Set c
-  --    _≈_ : Rel Carrier ℓ
-  --    _#_ : Rel Carrier ℓ′
-  --    _•_ : Op₂ Carrier
-  --    ε : Carrier
-
   postulate
     Op : Set
     ⟦_⟧op : Op → Op₂ ℕ
