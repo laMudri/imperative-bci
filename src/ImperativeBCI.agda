@@ -194,20 +194,40 @@ module ImperativeBCI where
   deterministic hq (e-if0-t q0 r0) (e-if0-f nq1 r1) = ⊥-elim (nq1 q0)
   deterministic hq (e-if0-f nq0 r0) (e-if0-t q1 r1) = ⊥-elim (nq0 q1)
   deterministic hq (e-if0-f nq0 r0) (e-if0-f nq1 r1) = deterministic hq r0 r1
-  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq (e-rd iq0 (n0 , nq0) r0) (e-rd iq1 (n1 , nq1) r1) with η x
-  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq (e-rd refl (n0 , nq0) r0) (e-rd refl (n1 , nq1) r1) | nat i rewrite hq i with h1 i
-  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq (e-rd refl (n0 , refl) r0) (e-rd refl (.n0 , refl) r1) | nat i | .(just n0) = deterministic hq r0 r1
-  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq (e-wr xq0 yq0 (n0 , nq0) r0) (e-wr xq1 yq1 (n1 , nq1) r1) with η x | η y
-  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq (e-wr refl refl (n0 , nq0) r0) (e-wr refl refl (n1 , nq1) r1) | nat i | nat n rewrite hq i with h1 i
-  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq (e-wr refl refl (n0 , refl) r0) (e-wr refl refl (.n0 , refl) r1) | nat i | nat n | .(just n0) = deterministic (write-ext i n hq) r0 r1
+  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq
+                (e-rd iq0 (n0 , nq0) r0) (e-rd iq1 (n1 , nq1) r1)
+                with η x
+  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq
+                (e-rd refl (n0 , nq0) r0) (e-rd refl (n1 , nq1) r1)
+                | nat i rewrite hq i with h1 i
+  deterministic {l} {h0} {h1} {η} {let-rd x ,, e} hq
+                (e-rd refl (n0 , refl) r0) (e-rd refl (.n0 , refl) r1)
+                | nat i | .(just n0) =
+    deterministic hq r0 r1
+  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq
+                (e-wr xq0 yq0 (n0 , nq0) r0) (e-wr xq1 yq1 (n1 , nq1) r1)
+                with η x | η y
+  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq
+                (e-wr refl refl (n0 , nq0) r0) (e-wr refl refl (n1 , nq1) r1)
+                | nat i | nat n rewrite hq i with h1 i
+  deterministic {l} {h0} {h1} {η} {wr[ x , y ],, e} hq
+                (e-wr refl refl (n0 , refl) r0) (e-wr refl refl (.n0 , refl) r1)
+                | nat i | nat n | .(just n0) =
+    deterministic (write-ext i n hq) r0 r1
   deterministic hq (e-op xq0 yq0 r0) (e-op xq1 yq1 r1) rewrite xq0 | yq0 with tt
-  deterministic hq (e-op xq0 yq0 r0) (e-op refl refl r1) | tt = deterministic hq r0 r1
-  deterministic {l} {h0} {h1} {η} {let-app[ x , y ],, e} hq (e-app q0 r0′ r0) (e-app q1 r1′ r1) with η x
-  deterministic {l} {h0} {h1} {η} {let-app[ x , y ],, e} hq (e-app refl r0′ r0) (e-app refl r1′ r1) | clo el ηl with deterministic hq r0′ r1′
+  deterministic hq (e-op xq0 yq0 r0) (e-op refl refl r1) | tt =
+    deterministic hq r0 r1
+  deterministic {l} {h0} {h1} {η} {let-app[ x , y ],, e} hq
+                (e-app q0 r0′ r0) (e-app q1 r1′ r1)
+                with η x
+  deterministic {l} {h0} {h1} {η} {let-app[ x , y ],, e} hq
+                (e-app refl r0′ r0) (e-app refl r1′ r1)
+                | clo el ηl with deterministic hq r0′ r1′
   ... | hlq , refl = deterministic (sym ∘ hlq) r0 r1
   deterministic hq (e-lam r0) (e-lam r1) = deterministic hq r0 r1
   deterministic hq (e-val r0) (e-val r1) = deterministic hq r0 r1
-  deterministic hq (e-var q0) (e-var q1) = (λ i → trans (sym (q0 i)) (trans (sym (hq i)) (q1 i))) , refl
+  deterministic hq (e-var q0) (e-var q1) =
+    (λ i → trans (sym (q0 i)) (trans (sym (hq i)) (q1 i))) , refl
 
   infix 4 _⊆_
 
@@ -306,7 +326,7 @@ module ImperativeBCI where
     where
     eq : (h ∪ h0) i ≡ just n
     eq rewrite hi≡jn = refl
-  local {h = h} {h′} {h0} {η} {v} {wr[ x , y ],, e} sep (e-wr {i = i} {n} xq yq i∈ r) =
+  local {h = h} {h′} {h0} {η} {v} sep (e-wr {e = e} {i = i} {n} xq yq i∈ r) =
     e-wr xq yq (proj₁ ⊆-∪ {h} {h0} i∈) lemma
     where
     ih : write i n h ∪ h0 , η , e ⇓ h′ ∪ h0 , v
