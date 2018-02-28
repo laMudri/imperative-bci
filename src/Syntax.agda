@@ -1,12 +1,12 @@
-module ImperativeBCI where
+module Syntax where
 
   open import Algebra
-  open import Algebra.FunctionProperties
+  open import Algebra.FunctionProperties using (Op₂)
   open import Algebra.Structures
 
   open import Data.Empty
   open import Data.Fin using (Fin; fromℕ≤)
-  open import Data.Maybe
+  open import Data.Maybe as M
   open import Data.Nat
   open import Data.Product
   open import Data.Sum
@@ -67,6 +67,16 @@ module ImperativeBCI where
   ∉dom→¬∈dom : ∀ {i h} → i ∉dom h → ¬ i ∈dom h
   ∉dom→¬∈dom {i} {h} i∉ (n , q) with h i
   ∉dom→¬∈dom {i} {h} refl (n , ()) | .nothing
+
+  _∈dom?_ : ∀ i h → Dec (i ∈dom h)
+  i ∈dom? h with h i
+  ... | just n = yes (n , refl)
+  ... | nothing = no λ { (n , ()) }
+
+  _∉dom?_ : ∀ i h → Dec (i ∉dom h)
+  i ∉dom? h with h i
+  ... | just n = no (λ ())
+  ... | nothing = yes refl
 
   write : ℕ → ℕ → Heap → Heap
   write i n h j with i ≟ j
