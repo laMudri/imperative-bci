@@ -10,5 +10,6 @@ module Relation.Binary.Sigma.Extras where
   open import Relation.Binary.Simple as S
   open import Relation.Binary.Simple.Indexed as SI
 
-  Subset : ∀ {a ℓ p} (A : B.Setoid a ℓ) (open B.Setoid A) → (Carrier → Set p) → B.Setoid _ _
+  Subset : ∀ {a ℓ p} (A : B.Setoid a ℓ) (open B.Setoid A) →
+           (Carrier → Set p) → B.Setoid _ _
   Subset {a} {ℓ} {p} A P = Σ.setoid A (SI.Always-setoid {ℓ = p} P)

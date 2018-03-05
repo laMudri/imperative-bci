@@ -15,7 +15,7 @@ module BCISemantics where
   open import Level renaming (zero to lzero; suc to lsuc; _⊔_ to _l⊔_)
 
   open import Function
-  open import Function.Equality
+  open import Function.Equality hiding (id; _∘_)
   open import Function.Inverse using (Inverse)
 
   open import Relation.Binary
@@ -54,10 +54,19 @@ module BCISemantics where
   ... | yes p = nothing
   ... | no ¬p = h j
 
+  punchOut-irrel : ∀ {n} {i j : Fin (suc n)}
+                   (i≢j i≢j′ : i ≢ j) → punchOut i≢j ≡ punchOut i≢j′
+  punchOut-irrel {n} {zero} {zero} neq neq′ = ⊥-elim (neq refl)
+  punchOut-irrel {n} {zero} {suc j} neq neq′ = refl
+  punchOut-irrel {zero} {suc ()} {j} neq neq′
+  punchOut-irrel {suc n} {suc i} {zero} neq neq′ = refl
+  punchOut-irrel {suc n} {suc i} {suc j} neq neq′ =
+    ≡.cong suc (punchOut-irrel (neq ∘ ≡.cong suc) (neq′ ∘ ≡.cong suc))
+
   delete-size : ∀ {i h n} →
                 i ∈dom h → Heap-size h (suc n) → Heap-size (delete i h) n
   delete-size {i} {h} {n} i∈ sz = record
-    { to = record { _⟨$⟩_ = {!to′!} ; cong = {!!} }
+    { to = record { _⟨$⟩_ = to′ ; cong = λ { (refl , lift tt) → to-cong _ _ } }
     ; from = {!from!}
     ; inverse-of = {!!}
     }
@@ -69,7 +78,10 @@ module BCISemantics where
     to′ (j , j∈) with i ≟ j
     to′ (j , _ , ()) | yes i=j
     to′ (j , j∈) | no i≠j =
-      punchOut {i = to ⟨$⟩ (i , i∈)} {to ⟨$⟩ (j , j∈)} λ eq →
+      punchOut {i = to ⟨$⟩ (i , i∈)} {to ⟨$⟩ (j , j∈)} neq
+      module Neq where
+      neq : to ⟨$⟩ (i , i∈) ≢ to ⟨$⟩ (j , j∈)
+      neq eq =
         i≠j (begin
           i
             ≡⟨ ≡.sym (proj₁ (left-inverse-of (i , i∈))) ⟩
@@ -79,6 +91,13 @@ module BCISemantics where
             ≡⟨ proj₁ (left-inverse-of (j , j∈)) ⟩
           j
             ∎)
+
+    to-cong : ∀ {j} → (j∈ j∈′ : j ∈dom delete i h) → to′ (j , j∈) ≡ to′ (j , j∈′)
+    to-cong {j} j∈ j∈′ with i ≟ j
+    to-cong {j} (_ , ()) j∈′ | yes i=j
+    to-cong {j} j∈ j∈′ | no i≠j with punchOut-irrel {i = to ⟨$⟩ (i , i∈)} {j = to ⟨$⟩ (j , j∈)} {!neq!}
+      where open Neq j i≠j j∈
+    ... | z = {!!}
 
   #-dec : ∀ h0 h1 n0 n1 → Heap-size h0 n0 → Heap-size h1 n1 → Dec (h0 # h1)
   #-dec h0 h1 zero n1 sz0 sz1 = {!!}
