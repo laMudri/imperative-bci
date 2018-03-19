@@ -1,4 +1,4 @@
-module Syntax where
+module Relational.Syntax where
 
   open import Algebra
   open import Algebra.FunctionProperties using (Op₂)
